@@ -488,6 +488,22 @@ static int pinnacle_init(const struct device *dev) {
         LOG_DBG("Failed to update sleep interaval %d", ret);
     }
 
+    uint8_t val;
+    int ret0 = pinnacle_seq_read(dev, PINNACLE_SLEEP_TIMER, &val, 1);
+    if (ret0 < 0) {
+        LOG_ERR("Failed to get sleep timer %d", ret0);
+    }
+    LOG_WRN("read sleep timer val: 0x%02x", val);
+
+    uint32_t sleep_timer_ms = CONFIG_ZMK_INPUT_PINNACLE_SLEEP_TIMER;
+    uint8_t sleep_timer_val = sleep_timer_ms / (1000 / 6);
+
+    ret0 = pinnacle_write(dev, PINNACLE_SLEEP_TIMER, sleep_timer_val);
+    if (ret0 < 0) {
+        LOG_ERR("Failed to clear STATUS1 register: %d", ret0);
+    }
+    LOG_WRN("wrote sleep timer val: 0x%02x", sleep_timer_val);
+
     uint8_t feed_cfg2 = PINNACLE_FEED_CFG2_EN_IM | PINNACLE_FEED_CFG2_EN_BTN_SCRL;
     if (config->no_taps) {
         feed_cfg2 |= PINNACLE_FEED_CFG2_DIS_TAP;

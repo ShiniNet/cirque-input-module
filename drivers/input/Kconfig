@@ -17,6 +17,11 @@ config INPUT_PINNACLE_INIT_PRIORITY
     int "Cirque Pinnacle initialization priority"
     default INPUT_INIT_PRIORITY
 
+config ZMK_PINNACLE_SLEEP_TIMER
+    int "Cirque Pinnacle Sleep entering timer"
+    default 5000
+    range 1000 42500
+
 if ZMK_MOUSE
 
 config ZMK_INPUT_PINNACLE_IDLE_SLEEPER
