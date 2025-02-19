@@ -22,12 +22,8 @@ config ZMK_PINNACLE_SLEEP_TIMER
     default 5000
     range 1000 42500
 
-if ZMK_MOUSE
-
 config ZMK_INPUT_PINNACLE_IDLE_SLEEPER
     bool "Pinnacle Sleep linked to ZMK idle state"
     default n
-
-endif
 
 endif

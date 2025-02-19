@@ -495,7 +495,7 @@ static int pinnacle_init(const struct device *dev) {
     }
     LOG_WRN("read sleep timer val: 0x%02x", val);
 
-    uint32_t sleep_timer_ms = CONFIG_ZMK_INPUT_PINNACLE_SLEEP_TIMER;
+    uint32_t sleep_timer_ms = CONFIG_ZMK_PINNACLE_SLEEP_TIMER;
     uint8_t sleep_timer_val = sleep_timer_ms / (1000 / 6);
 
     ret0 = pinnacle_write(dev, PINNACLE_SLEEP_TIMER, sleep_timer_val);
