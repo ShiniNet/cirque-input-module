@@ -239,6 +239,14 @@ static void pinnacle_report_data(const struct device *dev) {
         return;
     }
 
+#if CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN > 0
+    static int64_t last_smp_time = 0;
+    static int64_t last_rpt_time = 0;
+    int64_t now = k_uptime_get();
+    //LOG_WRN("Pinnacle now ti,e: %d", now);
+    //LOG_WRN("Pinnacle last_smp_time: %d", last_rpt_time);
+#endif
+
     LOG_HEXDUMP_DBG(packet, 1, "Pinnacle Status1");
 
     // Ignore 0xFF packets that indicate communcation failure, or if SW_DR isn't asserted
@@ -257,14 +265,18 @@ static void pinnacle_report_data(const struct device *dev) {
     uint8_t btn = packet[0] &
                   (PINNACLE_PACKET0_BTN_PRIM | PINNACLE_PACKET0_BTN_SEC | PINNACLE_PACKET0_BTN_AUX);
 
-    int8_t dx = (int8_t)packet[1];
-    int8_t dy = (int8_t)packet[2];
+                  
+    static int16_t dx = 0;
+    static int16_t dy = 0;
+    int8_t x = (int8_t)packet[1];
+    int8_t y = (int8_t)packet[2];
+    
 
     if (packet[0] & PINNACLE_PACKET0_X_SIGN) {
-        WRITE_BIT(dx, 7, 1);
+        WRITE_BIT(x, 7, 1);
     }
     if (packet[0] & PINNACLE_PACKET0_Y_SIGN) {
-        WRITE_BIT(dy, 7, 1);
+        WRITE_BIT(y, 7, 1);
     }
 
     if (data->in_int) {
@@ -284,8 +296,39 @@ static void pinnacle_report_data(const struct device *dev) {
 
     data->btn_cache = btn;
 
-    input_report_rel(dev, INPUT_REL_X, dx, false, K_FOREVER);
-    input_report_rel(dev, INPUT_REL_Y, dy, true, K_FOREVER);
+
+
+ #if CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN > 0
+    if (now - last_smp_time >= CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN) {
+        dx = 0;
+        dy = 0;
+    }
+    last_smp_time = now;
+#endif
+
+    dx += x;
+    dy += y;
+  
+#if CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN > 0
+    if (now - last_rpt_time < CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN) {
+        //LOG_WRN("Pinnacle No Report!");
+        return ;
+    }
+#endif
+
+    // fetch report value
+    int16_t rx = dx;
+    int16_t ry = dy;
+    dx = 0;
+    dy = 0;
+
+#if CONFIG_ZMK_INPUT_PINNACLE_REPORT_INTERVAL_MIN > 0
+    last_rpt_time = now;
+#endif
+
+    input_report_rel(dev, INPUT_REL_X, rx, false, K_FOREVER);
+    input_report_rel(dev, INPUT_REL_Y, ry, true, K_FOREVER);
+    //LOG_WRN("Pinnacle Reported!");
 
     uint8_t sys_cfg;
     ret = pinnacle_seq_read(dev, PINNACLE_SYS_CFG, &sys_cfg, 1);
